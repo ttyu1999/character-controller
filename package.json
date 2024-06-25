@@ -1,0 +1,25 @@
+{
+  "dependencies": {
+    "@a-type/rapier3d-node": "^0.11.1",
+    "@dimforge/rapier3d-compat": "^0.12.0",
+    "@parcel/config-default": "^2.11.0",
+    "atob": "^2.1.2",
+    "dat.gui": "^0.7.9",
+    "parcel": "^2.11.0",
+    "parcel-reporter-static-files-copy": "^1.5.3",
+    "three": "^0.161.0",
+    "uuid": "^9.0.1",
+    "uuidv4": "^6.2.13",
+    "ws": "^8.16.0"
+  },
+  "scripts": {
+    "start": "npx parcel ./src/index.html"
+  },
+  "devDependencies": {
+    "@flydotio/dockerfile": "^0.5.2",
+    "process": "^0.11.10"
+  },
+  "staticFiles": {
+    "staticOutPath": "assets"
+  }
+}
