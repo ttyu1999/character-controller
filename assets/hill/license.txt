@@ -1,0 +1,11 @@
+Model Information:
+* title:	House on the Hill
+* source:	https://sketchfab.com/3d-models/house-on-the-hill-3efa0f73228946009b9a8ee885f59165
+* author:	Shahriar Shahrabi (https://sketchfab.com/shahriyarshahrabi)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "House on the Hill" (https://sketchfab.com/3d-models/house-on-the-hill-3efa0f73228946009b9a8ee885f59165) by Shahriar Shahrabi (https://sketchfab.com/shahriyarshahrabi) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
