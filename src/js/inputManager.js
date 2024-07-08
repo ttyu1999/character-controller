@@ -36,42 +36,33 @@ export class InputManager {
         document.addEventListener('click', this.handleClick.bind(this), false);
         document.addEventListener('keyup', this.handleKeyUp.bind(this), false);
         document.addEventListener('mousemove', this.handleMouseMove.bind(this), false);
-        document.getElementById('jump-icon').addEventListener('touchstart', () => {
-            this.keysPressed[' '] = true;
-        }, false);
-        document.getElementById('jump-icon').addEventListener('touchend', () => {
-            this.keysPressed[' '] = false;
-        }, false);
-        document.getElementById('yes-icon').addEventListener('touchstart', () => {
-            this.keysPressed['1'] = true;
-        }, false);
-        document.getElementById('yes-icon').addEventListener('touchend', () => {
-            this.keysPressed['1'] = false;
-        }, false);
-        document.getElementById('no-icon').addEventListener('touchstart', () => {
-            this.keysPressed['2'] = true;
-        }, false);
-        document.getElementById('no-icon').addEventListener('touchend', () => {
-            this.keysPressed['2'] = false;
-        }, false);
-        document.getElementById('wave-icon').addEventListener('touchstart', () => {
-            this.keysPressed['3'] = true;
-        }, false);
-        document.getElementById('wave-icon').addEventListener('touchend', () => {
-            this.keysPressed['3'] = false;
-        }, false);
-        document.getElementById('view-icon').addEventListener('touchstart', () => {
-            this.keysPressed['v'] = true;
-        }, false);
-        document.getElementById('view-icon').addEventListener('touchend', () => {
-            this.keysPressed['v'] = false;
-        }, false);
-        
+
+        this.addTouchEventListeners();
+
         if (this.touchSupported) {
             document.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
             document.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
             document.addEventListener('touchend', this.handleTouchEnd.bind(this), { passive: false });
         }
+    }
+
+    addTouchEventListeners() {
+        const touchButtons = [
+            { id: 'jump-icon', key: ' ' },
+            { id: 'yes-icon', key: '1' },
+            { id: 'no-icon', key: '2' },
+            { id: 'wave-icon', key: '3' },
+            { id: 'view-icon', key: 'v' }
+        ];
+
+        touchButtons.forEach(button => {
+            document.getElementById(button.id).addEventListener('touchstart', () => {
+                this.keysPressed[button.key] = true;
+            }, false);
+            document.getElementById(button.id).addEventListener('touchend', () => {
+                this.keysPressed[button.key] = false;
+            }, false);
+        });
     }
 
     updateJoystick(touch, joystick, stick) {
@@ -119,70 +110,7 @@ export class InputManager {
         }
     }
 
-    handleTouchMove(event) {
-        for (let touch of event.touches) {
-            if (touch.identifier === this.joystickTouchId && this.joystickActive) {
-                this.updateJoystick(touch, document.getElementById('move-joystick'), document.getElementById('move-stick'));
-            } else {
-                const touchX = touch.clientX;
-                const touchY = touch.clientY;
-                const deltaX = touchX - this.lastTouchX;
-                const deltaY = touchY - this.lastTouchY;
-                this.lastTouchX = touchX;
-                this.lastTouchY = touchY;
 
-                Object.values(this.gameManager.players).forEach(player => {
-                    if (player && player.isLocalPlayer) {
-                        if (player.isFirstPerson) {
-                            const newNeckRotationX = Math.min(Math.max(player.neckRotationX - deltaY * player.neckRotationSpeed * 3, -player.maxNeckRotationX), player.maxNeckRotationX);
-
-                            const hasSignificantChange = player.lastNeckRotationX === null || Math.abs(newNeckRotationX - player.lastNeckRotationX) > player.rotationChangeThreshold;
-
-                            const now = Date.now();
-                            if (hasSignificantChange && now - player.lastSocketUpdateTime >= player.socketUpdateInterval) {
-                                player.lastSocketUpdateTime = now;
-                                player.lastNeckRotationX = newNeckRotationX;
-
-                                const updateData = {
-                                    type: "neckRotationX", 
-                                    id: player.clientId, 
-                                    neckRotationX: newNeckRotationX
-                                };
-
-                                player.ws.send(JSON.stringify(updateData));
-                            }
-
-                            const updateData = {
-                                type: "neckRotationX", 
-                                id: player.clientId, 
-                                neckRotationX: newNeckRotationX
-                            };
-
-                            player.ws.send(JSON.stringify(updateData));
-
-                            player.neckRotationX = newNeckRotationX;
-
-                            this.euler.setFromQuaternion(this.camera.quaternion);
-
-                            this.euler.y -= deltaX * 0.003;
-                            this.euler.x -= deltaY * 0.003;
-
-                            this.euler.x = Math.max(-this.PI_2, Math.min(this.PI_2, this.euler.x));
-
-                            this.camera.quaternion.setFromEuler(this.euler);
-                        } else {
-                            player.rotationX -= deltaX * 0.005; 
-                            player.rotationY += deltaY * 0.005;
-
-                            player.rotationY = Math.max(0, Math.min(Math.PI / 2, player.rotationY));
-                        }
-                    }
-                });
-            }
-        }
-    
-        event.preventDefault(); // 阻止默認行為
-    }
 
     handleTouchEnd(event) {
         const stick = document.getElementById('move-stick');
@@ -191,10 +119,7 @@ export class InputManager {
                 this.joystickActive = false;
                 this.joystickTouchId = null;
                 stick.style.transform = `translate(-50%, -50%)`;
-                this.keysPressed['w'] = false;
-                this.keysPressed['a'] = false;
-                this.keysPressed['s'] = false;
-                this.keysPressed['d'] = false;
+                this.resetJoystickKeys();
                 event.preventDefault(); // 阻止默認行為
             }
         }
@@ -211,54 +136,74 @@ export class InputManager {
         );
     }
 
+    handleTouchMove(event) {
+        for (let touch of event.touches) {
+            if (touch.identifier === this.joystickTouchId && this.joystickActive) {
+                this.updateJoystick(touch, document.getElementById('move-joystick'), document.getElementById('move-stick'));
+            } else {
+                const touchX = touch.clientX;
+                const touchY = touch.clientY;
+                const deltaX = touchX - this.lastTouchX;
+                const deltaY = touchY - this.lastTouchY;
+                this.lastTouchX = touchX;
+                this.lastTouchY = touchY;
+                this.handleMove(deltaX, deltaY, true); // 觸控靈敏度較高
+            }
+        }
+    
+        event.preventDefault(); // 阻止默認行為
+    }
+    
     handleMouseMove(event) {
+        if (!this.pointerLockControls.isLocked || !this.gameManager.connectionActive) return;
+        const deltaX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+        const deltaY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+        this.handleMove(deltaX, deltaY, false); // 滑鼠靈敏度正常
+    }
+    
+    handleMove(deltaX, deltaY, isTouch) {
+        const sensitivity = isTouch ? 0.002 : 0.001; // 觸控和滑鼠的靈敏度不同
+    
         Object.values(this.gameManager.players).forEach(player => {
             if (player && player.isLocalPlayer) {
-                if (!this.pointerLockControls.isLocked || !this.gameManager.connectionActive) return;
-
-                // 滑鼠 Y 軸移動量控制脖子旋轉
                 if (player.isFirstPerson) {
-                    const deltaY = event.movementY || event.mozMovementY || event. webkitMovementY || 0;
-
-                    const newNeckRotationX = Math.min(Math.max(player.neckRotationX - deltaY * player.neckRotationSpeed, -player.maxNeckRotationX), player.maxNeckRotationX);
-
-                    // 檢查變化量是否超過閾值
+                    const newNeckRotationX = Math.min(Math.max(player.neckRotationX - deltaY * player.neckRotationSpeed * sensitivity, -player.maxNeckRotationX), player.maxNeckRotationX);
+    
                     const hasSignificantChange = player.lastNeckRotationX === null || Math.abs(newNeckRotationX - player.lastNeckRotationX) > player.rotationChangeThreshold;
-
-                    // 僅在角度變化超過閾值且達到時間間隔時發送
                     const now = Date.now();
                     if (hasSignificantChange && now - player.lastSocketUpdateTime >= player.socketUpdateInterval) {
                         player.lastSocketUpdateTime = now;
                         player.lastNeckRotationX = newNeckRotationX;
-
-                        // 構造要傳遞的數據
+    
                         const updateData = {
-                            type: "neckRotationX", // 更新類型
-                            id: player.clientId, // 玩家ID
+                            type: "neckRotationX",
+                            id: player.clientId,
                             neckRotationX: newNeckRotationX
                         };
-
-                        // 發送差異更新到伺服器
+    
                         player.ws.send(JSON.stringify(updateData));
                     }
-
+    
                     const updateData = {
-                        type: "neckRotationX", // 更新類型
-                        id: player.clientId, // 玩家ID
+                        type: "neckRotationX",
+                        id: player.clientId,
                         neckRotationX: newNeckRotationX
                     };
-
-                    // 發送差異更新到伺服器
+    
                     player.ws.send(JSON.stringify(updateData));
-
-                    // 更新當前的脖子旋轉
                     player.neckRotationX = newNeckRotationX;
+    
+                    if (isTouch) {
+                        this.euler.setFromQuaternion(this.camera.quaternion);
+                        this.euler.y -= deltaX * sensitivity;
+                        this.euler.x -= deltaY * sensitivity;
+                        this.euler.x = Math.max(-this.PI_2, Math.min(this.PI_2, this.euler.x));
+                        this.camera.quaternion.setFromEuler(this.euler);
+                    }
                 } else {
-                    player.rotationX -= event.movementX * 0.0005; // 滑鼠靈敏度
-                    player.rotationY += event.movementY * 0.0005;
-
-                    // 限制垂直旋轉角度，只能在0 ~ 90度這個區間旋轉
-                    player.rotationY = Math.max(0, Math.min(Math.PI / 2, player.rotationY));
+                    player.rotationX -= deltaX * sensitivity;
+                    player.rotationY += deltaY * sensitivity;
+                    player.rotationY = Math.max(0, Math.min(Math.PI / 2 - 0.1, player.rotationY));
                 }
             }
         });
@@ -357,6 +302,10 @@ export class InputManager {
 
     resetKeysPressed(keys) {
         keys.forEach(key => this.keysPressed[key] = false);
+    }
+
+    resetJoystickKeys() {
+        ['w', 'a', 's', 'd'].forEach(key => this.keysPressed[key] = false);
     }
 
     update() {
