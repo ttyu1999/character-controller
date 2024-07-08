@@ -110,8 +110,6 @@ export class InputManager {
         }
     }
 
-
-
     handleTouchEnd(event) {
         const stick = document.getElementById('move-stick');
         for (let touch of event.changedTouches) {
@@ -167,7 +165,7 @@ export class InputManager {
         Object.values(this.gameManager.players).forEach(player => {
             if (player && player.isLocalPlayer) {
                 if (player.isFirstPerson) {
-                    const newNeckRotationX = Math.min(Math.max(player.neckRotationX - deltaY * player.neckRotationSpeed * sensitivity, -player.maxNeckRotationX), player.maxNeckRotationX);
+                    const newNeckRotationX = Math.min(Math.max(player.neckRotationX - deltaY * player.neckRotationSpeed * ( isTouch ? 3 : 1 ), -player.maxNeckRotationX), player.maxNeckRotationX);
     
                     const hasSignificantChange = player.lastNeckRotationX === null || Math.abs(newNeckRotationX - player.lastNeckRotationX) > player.rotationChangeThreshold;
                     const now = Date.now();
